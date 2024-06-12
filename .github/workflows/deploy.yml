@@ -1,0 +1,43 @@
+name: Build and Deploy Node.js to Azure App Service
+
+on:
+  push:
+    branches:
+      - main  # Change to your default branch if different
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'  # Specify the Node.js version you need
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the project
+        run: npm run build  # Adjust if your build script is different
+
+      - name: Zip the build artifacts
+        run: |
+          zip -r build.zip . -x node_modules\* .git\* .github\*  # Adjust according to your build output
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: build.zip
+
+      - name: Azure Web App Deploy
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: YOUR_APP_SERVICE_NAME  # Replace with your Azure App Service name
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}  # This should be set in your GitHub secrets
+          package: build.zip
+
